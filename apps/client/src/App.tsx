@@ -30,7 +30,9 @@ function App() {
     ms.disconnect();
   };
 
-  const onStartWebcamBtnClick: MouseEventHandler<HTMLButtonElement> = async () => {
+  const onStartWebcamBtnClick: MouseEventHandler<
+    HTMLButtonElement
+  > = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     await ms.produce(stream, (state) => {
       switch (state) {
@@ -42,8 +44,12 @@ function App() {
     });
   };
 
-  const onStartDisplayBtnClick: MouseEventHandler<HTMLButtonElement> = async () => {
-    const stream = await navigator.mediaDevices.getDisplayMedia({video: true})
+  const onStartDisplayBtnClick: MouseEventHandler<
+    HTMLButtonElement
+  > = async () => {
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
+    });
     await ms.produce(stream, (state) => {
       switch (state) {
         case "connected":
@@ -51,12 +57,16 @@ function App() {
           break;
       }
       setProducerState(state);
-    })
+    });
   };
 
-  const onConsumeBtnClick: MouseEventHandler<
+  const onStopProduceBtnClick: MouseEventHandler<
     HTMLButtonElement
   > = async () => {
+    await ms.unproduce();
+  };
+
+  const onConsumeBtnClick: MouseEventHandler<HTMLButtonElement> = async () => {
     await ms.consume((state, stream) => {
       switch (state) {
         case "connected":
@@ -66,6 +76,23 @@ function App() {
       setConsumerState(state);
     });
   };
+
+  const onStopConsumeBtnClick: MouseEventHandler<
+    HTMLButtonElement
+  > = async () => {
+    await ms.unconsume();
+  };
+
+  const producing = !(
+    ms.connected &&
+    (["disconnected", "failed"] as ConnectionState[]).includes(producerState)
+  );
+
+  const consuming = !(
+    ms.connected &&
+    (["connected"] as ConnectionState[]).includes(producerState) &&
+    (["disconnected", "failed"] as ConnectionState[]).includes(consumerState)
+  );
 
   return (
     <Box p={8}>
@@ -100,48 +127,23 @@ function App() {
         </Button>
       </Flex>
       <Flex gap={4}>
-        <Button
-          isDisabled={
-            !(
-              ms.connected &&
-              (["disconnected", "failed"] as ConnectionState[]).includes(
-                producerState
-              )
-            )
-          }
-          onClick={onStartWebcamBtnClick}
-        >
+        <Button isDisabled={producing} onClick={onStartWebcamBtnClick}>
           Start Webcam
         </Button>
-        <Button
-          isDisabled={
-            !(
-              ms.connected &&
-              (["disconnected", "failed"] as ConnectionState[]).includes(
-                producerState
-              )
-            )
-          }
-          onClick={onStartDisplayBtnClick}
-        >
+        <Button isDisabled={producing} onClick={onStartDisplayBtnClick}>
           Start Display
+        </Button>
+        <Button isDisabled={!producing} onClick={onStopProduceBtnClick}>
+          Stop Produce
         </Button>
         <span>connectionState: {producerState}</span>
       </Flex>
       <Flex gap={4}>
-        <Button
-          isDisabled={
-            !(
-              ms.connected &&
-              (["connected"] as ConnectionState[]).includes(producerState) &&
-              (["disconnected", "failed"] as ConnectionState[]).includes(
-                consumerState
-              )
-            )
-          }
-          onClick={onConsumeBtnClick}
-        >
+        <Button isDisabled={consuming} onClick={onConsumeBtnClick}>
           Consume
+        </Button>
+        <Button isDisabled={!consuming} onClick={onStopConsumeBtnClick}>
+          Stop Consume
         </Button>
         <span>connectionState: {consumerState}</span>
       </Flex>

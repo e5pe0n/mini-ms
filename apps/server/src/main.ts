@@ -120,6 +120,9 @@ async function main() {
       producer = await producerTransport.produce({ kind, rtpParameters });
       callback({ id: producer.id });
     });
+    socket.on("unproduce", (producerId) => {
+      producer.close();
+    });
     socket.on("consume", async (rtpCapabilities, callback) => {
       if (!msRouter.canConsume({ producerId: producer.id, rtpCapabilities })) {
         console.error("Can't consume");
@@ -153,6 +156,9 @@ async function main() {
     socket.on("resume", async (callback) => {
       await consumer.resume();
       callback();
+    });
+    socket.on("unconsume", (consumerId) => {
+      consumer.close();
     });
   });
 }

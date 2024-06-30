@@ -1,6 +1,11 @@
 import { createContext, useContext, useState } from "react";
 import { Socket } from "socket.io-client";
-import { ConnectionState, Device } from "mediasoup-client/lib/types";
+import {
+  ConnectionState,
+  Device,
+  Producer,
+  Consumer,
+} from "mediasoup-client/lib/types";
 import * as mediasoup from "mediasoup-client";
 
 import { promisifySocket } from "./socket";
@@ -18,9 +23,11 @@ export type Ms = {
     stream: MediaStream,
     listener: (state: PublicationState) => void
   ) => Promise<void>;
+  unproduce: () => Promise<void>;
   consume: (
     listener: (state: SubscriptionState, stream: MediaStream) => void
   ) => Promise<void>;
+  unconsume: () => Promise<void>;
 };
 
 export const useMs = () => {
@@ -32,6 +39,8 @@ export const useMs = () => {
   const socket = promisifySocket(_socket);
   const [connected, setConnected] = useState(false);
   const [device, setDevice] = useState<Device>();
+  const [producer, setProducer] = useState<Producer>();
+  const [consumer, setConsumer] = useState<Consumer>();
 
   socket.on("connect", async () => {
     console.log(`Connected to server: socket.id=${socket.id}`);
@@ -90,6 +99,11 @@ export const useMs = () => {
 
       const producer = await transport.produce({ track });
       console.log({ producer });
+      setProducer(producer);
+    },
+    unproduce: async () => {
+      producer.close();
+      await socket.req("unproduce", producer.id);
     },
     consume: async (listener) => {
       if (!device) {
@@ -128,6 +142,12 @@ export const useMs = () => {
         }
         listener(state, stream);
       });
+
+      setConsumer(consumer);
+    },
+    unconsume: async () => {
+      consumer.close();
+      await socket.req("unconsume", consumer.id);
     },
   } satisfies Ms;
 };

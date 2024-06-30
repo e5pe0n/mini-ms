@@ -3,6 +3,7 @@ import {
   ConsumerOptions,
   DtlsParameters,
   Producer,
+  Consumer,
   RtpCapabilities,
   TransportOptions,
 } from "mediasoup-client/lib/types";
@@ -36,9 +37,17 @@ type K1Methods = {
     params: ServerSideProducerOptions;
     res: { id: Producer["id"] };
   };
+  unproduce: {
+    params: Producer["id"];
+    res: void;
+  };
   consume: {
     params: RtpCapabilities;
     res: ConsumerOptions;
+  };
+  unconsume: {
+    params: Consumer["id"];
+    res: void;
   };
 };
 
