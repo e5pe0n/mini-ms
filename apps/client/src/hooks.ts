@@ -14,11 +14,11 @@ export type Ms = {
   connected: boolean;
   connect: () => void;
   disconnect: () => void;
-  publish: (
+  produce: (
     stream: MediaStream,
     listener: (state: PublicationState) => void
   ) => Promise<void>;
-  subscribe: (
+  consume: (
     listener: (state: SubscriptionState, stream: MediaStream) => void
   ) => Promise<void>;
 };
@@ -52,7 +52,7 @@ export const useMs = () => {
     connected,
     connect: () => socket.connect(),
     disconnect: () => socket.disconnect(),
-    publish: async (stream, on) => {
+    produce: async (stream, on) => {
       if (!device) {
         console.error("Device is not ready");
         return;
@@ -91,7 +91,7 @@ export const useMs = () => {
       const producer = await transport.produce({ track });
       console.log({ producer });
     },
-    subscribe: async (listener) => {
+    consume: async (listener) => {
       if (!device) {
         console.error("Device is not ready");
         return;

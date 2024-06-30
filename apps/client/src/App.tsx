@@ -1,5 +1,4 @@
 import { Box, Button, Flex } from "@chakra-ui/react";
-import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import type { ConnectionState } from "mediasoup-client/lib/types";
 import { CSSProperties, MouseEventHandler, useRef, useState } from "react";
@@ -11,20 +10,10 @@ const videoStyle: CSSProperties = {
   width: "360px",
 };
 
-async function helloWorld() {
-  return await axios
-    .get("https://localhost:3000/hello-world")
-    .then((res) => res.data);
-}
-
 function App() {
-  const { data } = useQuery({
-    queryKey: ["hello-world"],
-    queryFn: helloWorld,
-  });
-  const [publicationState, setPublicationState] =
+  const [producerState, setProducerState] =
     useState<PublicationState>("disconnected");
-  const [subscriptionState, setSubscriptionState] =
+  const [consumerState, setConsumerState] =
     useState<SubscriptionState>("disconnected");
   const localVideoRef = useRef<HTMLVideoElement>();
   const remoteVideoRef = useRef<HTMLVideoElement>();
@@ -41,41 +30,51 @@ function App() {
     ms.disconnect();
   };
 
-  const onPublishBtnClick: MouseEventHandler<HTMLButtonElement> = async () => {
+  const onStartWebcamBtnClick: MouseEventHandler<HTMLButtonElement> = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    await ms.publish(stream, (state) => {
+    await ms.produce(stream, (state) => {
       switch (state) {
         case "connected":
           localVideoRef.current.srcObject = stream;
           break;
       }
-      setPublicationState(state);
+      setProducerState(state);
     });
   };
 
-  const onSubscribeBtnClick: MouseEventHandler<
+  const onStartDisplayBtnClick: MouseEventHandler<HTMLButtonElement> = async () => {
+    const stream = await navigator.mediaDevices.getDisplayMedia({video: true})
+    await ms.produce(stream, (state) => {
+      switch (state) {
+        case "connected":
+          localVideoRef.current.srcObject = stream;
+          break;
+      }
+      setProducerState(state);
+    })
+  };
+
+  const onConsumeBtnClick: MouseEventHandler<
     HTMLButtonElement
   > = async () => {
-    await ms.subscribe((state, stream) => {
+    await ms.consume((state, stream) => {
       switch (state) {
         case "connected":
           remoteVideoRef.current.srcObject = stream;
           break;
       }
-      setSubscriptionState(state);
+      setConsumerState(state);
     });
   };
 
   return (
     <Box p={8}>
-      <Box>{data}</Box>
       <Box>connected: {ms.connected}</Box>
       <Flex gap={4}>
         <Box>
           <p>Local</p>
           <video
             style={videoStyle}
-            controls
             autoPlay
             playsInline
             ref={localVideoRef}
@@ -106,32 +105,45 @@ function App() {
             !(
               ms.connected &&
               (["disconnected", "failed"] as ConnectionState[]).includes(
-                publicationState
+                producerState
               )
             )
           }
-          onClick={onPublishBtnClick}
+          onClick={onStartWebcamBtnClick}
         >
           Start Webcam
         </Button>
-        <span>connectionState: {publicationState}</span>
+        <Button
+          isDisabled={
+            !(
+              ms.connected &&
+              (["disconnected", "failed"] as ConnectionState[]).includes(
+                producerState
+              )
+            )
+          }
+          onClick={onStartDisplayBtnClick}
+        >
+          Start Display
+        </Button>
+        <span>connectionState: {producerState}</span>
       </Flex>
       <Flex gap={4}>
         <Button
           isDisabled={
             !(
               ms.connected &&
-              (["connected"] as ConnectionState[]).includes(publicationState) &&
+              (["connected"] as ConnectionState[]).includes(producerState) &&
               (["disconnected", "failed"] as ConnectionState[]).includes(
-                subscriptionState
+                consumerState
               )
             )
           }
-          onClick={onSubscribeBtnClick}
+          onClick={onConsumeBtnClick}
         >
-          Subscribe
+          Consume
         </Button>
-        <span>connectionState: {subscriptionState}</span>
+        <span>connectionState: {consumerState}</span>
       </Flex>
     </Box>
   );

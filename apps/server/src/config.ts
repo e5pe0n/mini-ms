@@ -23,9 +23,9 @@ type Config = {
 
 export const config = {
   clientOrigin: "http://localhost:5173",
-  port: 3000,
-  sslCrt: path.join(__dirname, "../../../localhost+1.pem"),
-  sslKey: path.join(__dirname, "../../../localhost+1-key.pem"),
+  port: 3030,
+  sslCrt: path.join(__dirname, "../../../localhost.pem"),
+  sslKey: path.join(__dirname, "../../../localhost-key.pem"),
   mediasoup: {
     worker: {
       rtcMinPort: 10_000,

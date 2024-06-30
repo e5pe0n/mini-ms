@@ -10,7 +10,7 @@ import { io } from "socket.io-client";
 
 const queryClient = new QueryClient();
 
-const socket = io("https://localhost:3000", { autoConnect: false });
+const socket = io("https://localhost:3030", { autoConnect: false });
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
